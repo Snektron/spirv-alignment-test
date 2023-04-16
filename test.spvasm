@@ -1,0 +1,51 @@
+               OpCapability Kernel
+               OpCapability Addresses
+               OpCapability Int8
+               OpCapability Int16
+               OpCapability GenericPointer
+               OpMemoryModel Physical64 OpenCL
+               OpEntryPoint Kernel %k "test" %a %b
+
+               OpDecorate %b Alignment 4
+
+       %void = OpTypeVoid
+         %u8 = OpTypeInt 8 0
+        %u16 = OpTypeInt 16 0
+        %u32 = OpTypeInt 32 0
+
+          %1 = OpConstant %u32 1
+          %8 = OpConstant %u32 8
+
+         %A = OpTypeArray %u8 %8
+       %p_A = OpTypePointer Workgroup %A
+
+        %B = OpTypeStruct %u32 %u32
+      %p_B = OpTypePointer Workgroup %B
+        %c = OpConstantComposite %B %1 %8
+
+       %p_u8 = OpTypePointer Workgroup %u8
+      %pp_u8 = OpTypePointer CrossWorkgroup %p_u8
+
+          %a = OpVariable %p_u8 Workgroup
+          %b = OpVariable %p_A Workgroup
+
+          %K = OpTypeFunction %void %pp_u8
+
+          %k = OpFunction %void None %K
+      %out_0 = OpFunctionParameter %pp_u8
+        %lbl = OpLabel
+
+               ; Pointer-cast %b to %B and write something to it
+         %bb = OpBitcast %p_B %b
+               OpStore %bb %c Aligned 4
+
+               ; Write address of %a to out[0]
+               OpStore %out_0 %a
+
+               ; Write address of %b to out[1]
+          %x = OpBitcast %p_u8 %b
+      %out_1 = OpInBoundsPtrAccessChain %pp_u8 %out_0 %1
+               OpStore %out_1 %x
+
+               OpReturn
+               OpFunctionEnd
